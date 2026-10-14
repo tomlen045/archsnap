@@ -22,7 +22,7 @@ import struct
 import sys
 import time
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 MAX_BIN = 512 * 1024 * 1024          # 单文件读取上限
 HASH_BYTES = 256 * 1024              # 特征解析只读头部 + 动态段区间
 
@@ -308,6 +308,9 @@ def diff_profiles(old, new):
         fo, fn = o.get("features") or {}, n.get("features") or {}
         feat_keys = ("format", "bits", "endian", "arch", "etype", "pie", "interp", "target")
         feat_changes = []
+        # symlink 改指向: target 记在档案顶层(不在 features 里), 必须从顶层读
+        if o.get("target") != n.get("target"):
+            feat_changes.append("target: %s -> %s" % (o.get("target"), n.get("target")))
         for k in feat_keys:
             if fo.get(k) != fn.get(k):
                 feat_changes.append("%s: %s -> %s" % (k, fo.get(k), fn.get(k)))
@@ -461,6 +464,23 @@ def selftest():
     ok(("CHANGED", "keep.bin") not in kinds, "diff: 未变文件零误报")
     crit = [x for x in findings if x["level"] == "CRIT"]
     ok(len(crit) == 1 and "pie" in crit[0]["detail"], "diff: FEAT 详情含 pie 字段")
+    # 4b. symlink 改指向 = 特征级变化(CRIT), 端到端
+    d1s = os.path.join(tmp, "s1"); d2s = os.path.join(tmp, "s2")
+    os.makedirs(d1s); os.makedirs(d2s)
+    real_a = _mk_elf(etype=2)
+    real_b = _mk_elf(etype=3, needed=["libnew.so.1"])
+    open(os.path.join(d1s, "real_a"), "wb").write(real_a)
+    open(os.path.join(d1s, "real_b"), "wb").write(real_b)
+    open(os.path.join(d2s, "real_a"), "wb").write(real_a)
+    open(os.path.join(d2s, "real_b"), "wb").write(real_b)
+    os.symlink("real_a", os.path.join(d1s, "tool"))
+    os.symlink("real_b", os.path.join(d2s, "tool"))
+    olds_p, news_p = build_profile(d1s), build_profile(d2s)
+    fnd_s, _ = diff_profiles(olds_p, news_p)
+    crit_s = [x for x in fnd_s if x["level"] == "CRIT" and x["path"] == "tool"]
+    ok(len(crit_s) == 1 and "target" in crit_s[0].get("detail", ""),
+       "diff: symlink 改指向 -> FEAT(CRIT)")
+
     # 5. 偏态演习: 400 文件仅 2 个特征变化, 不得被噪音淹没
     d3 = os.path.join(tmp, "v3"); os.makedirs(d3)
     for i in range(400):
@@ -488,7 +508,7 @@ def selftest():
     ok(len(crit2) == 2, "偏态演习: 2/400 特征变化全部拎出(CRIT=2)")
     # 6. 退出码约定
     ok(True, "退出码约定: 0干净/1变化/2参数/3自测失败(文档)")
-    total = 14
+    total = 15
     print("=" * 62)
     if fails:
         print("SELFTEST FAIL: %d/%d 项未过: %s" % (len(fails), total, ", ".join(fails)))

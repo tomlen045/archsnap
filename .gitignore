@@ -8,3 +8,8 @@ cards/
 __pycache__/
 *.pyc
 scan_gitee_token.py
+publish_gitee.py
+publish-github.sh
+check_web.py
+check_readback.py
+shot*.png

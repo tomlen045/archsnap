@@ -20,7 +20,7 @@ In one line: **cfgdrift watches text config drift; archsnap watches binary featu
 - **Three-tier diff**: `FEAT/CRIT` > `CHANGED/WARN` > `ADD|DEL/INFO`.
 - **Exit codes are the verdict**: `0` clean, `1` changed, `2` usage/IO error, `3` selftest failed — cron and CI friendly.
 - **Skew-immune**: 2 feature changes inside 40k files all surface as CRIT (exercised in selftest).
-- **14/14 selftest green**, including synthetic ELF fixtures and a 400-file skew drill.
+- **15/15 selftest green**, including synthetic ELF fixtures, an end-to-end symlink-redirect case, and a 400-file skew drill.
 
 ## Quick start
 

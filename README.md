@@ -18,7 +18,7 @@
 - **三级 diff**：`FEAT/CRIT`（特征级变化：PIE 摘除、依赖增减、架构变化、symlink 改向）＞ `CHANGED/WARN`（内容变了特征没变）＞ `ADD|DEL/INFO`。
 - **退出码即结论**：`0` 干净、`1` 有变化、`2` 参数/IO 错误、`3` 自测未过——cron 与 CI 直接用。
 - **偏态免疫**：4 万文件里 2 个特征变化也全部登顶 CRIT，不被海量普通替换淹没（内置演习验证）。
-- **自测 14 项全绿**：`selftest` 子命令内置全部不变量，含合成 ELF fixture 与 400 文件偏态演习。
+- **自测 15 项全绿**：`selftest` 子命令内置全部不变量，含合成 ELF fixture、symlink 改向端到端与 400 文件偏态演习。
 
 ## 快速开始
 
@@ -98,10 +98,11 @@ $ python3 archsnap.py selftest
   diff: PIE 摘除升级为 FEAT(CRIT)                           PASS
   diff: 未变文件零误报                                        PASS
   diff: FEAT 详情含 pie 字段                                PASS
+  diff: symlink 改指向 -> FEAT(CRIT)                      PASS
   偏态演习: 2/400 特征变化全部拎出(CRIT=2)                         PASS
   退出码约定: 0干净/1变化/2参数/3自测失败(文档)                         PASS
 ==============================================================
-SELFTEST PASS 14/14
+SELFTEST PASS 15/15
 ```
 
 ## License
